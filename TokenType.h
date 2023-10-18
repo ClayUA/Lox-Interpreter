@@ -2,7 +2,7 @@
 
 
 
-enum class TokenType {
+enum TokenType {
 	// single character tokens
 	LEFT_PAREN, 
 	RIGHT_PAREN,

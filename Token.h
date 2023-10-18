@@ -6,12 +6,18 @@ using namespace std;
 
 
 class Token{
-private:
-	TokenType	ttpye;	
+public:
+	TokenType	type;	
 	string		lexeme;
 	std::any	literal;
 	int			line;
 
+	Token(TokenType ttype, string llexeme, std::any lliteral, int lline){
+		type = ttype;
+		lexeme = llexeme;
+		literal = lliteral;
+		line = lline;
+	}
 	};
 
 
