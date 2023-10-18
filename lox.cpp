@@ -1,5 +1,7 @@
+#include <iostream>
+using namespace std;
 class Lox {
-    main(int argc, char* argv[]) {
+    int main(int argc, char* argv[]) {
         if (argc > 1) {
             cout << "Usage: jlox [script]" << endl;
             exit(1); 
@@ -9,4 +11,4 @@ class Lox {
         runPrompt();
     }
   }
-}
+};

@@ -43,7 +43,7 @@ vector<Token> Scanner::scanTokens(){
 		scanToken();
 	}
 
-	tokens.push_back(EOF,"",null,line);
+	tokens.emplace(Token(EOF,"",null,line));
 	return tokens;
 }
 
@@ -80,9 +80,31 @@ void Scanner::scanToken(){
 				addToken(SLASH)
 			}
 			break;
+
+		case ' ':
+		case '\r':
+		case '\t':
+			break;
+
+		case '\n':
+			line++;
+			break;
+
+		case '"':
+			String();
+			break;
+
+
 		default:
+			if(isDigit(c)){
+				number();
+			}
+			else{
 			runtime_error{"Unexpected Character"};
 			break;
+			}
+	
+		
 	}
 }
 
@@ -112,8 +134,46 @@ void Scanner::addToken(TokenType ttype) {
 
 void Scanner::addToken(TokenType type, std::any literal) {
     String text = source.substr(start, current - start);
-    tokens.push_back(Token(type, text, literal, line));
+    tokens.emplace_back(Token(type, text, literal, line));
   }
+
+void Scanner::string(){
+	while (peek() != '"' && !isAtEnd()) {
+      if (peek() == '\n') line++;
+      advance();
+	}
+
+	if(IsAtEnd()){
+		runtime_error{"Undending String"};
+		return;
+	}
+	advance();
+
+	String value = source.substr(start + 1, current - 1);
+	addToken(STRING,value);
+}
+bool Scanner::IsDigit(char c){
+	return c >= '9' && c <= '0';
+}
+void Scanner::number(){
+	while (isDigit(peek())){
+		advance();
+	}
+    if (peek() == '.' && isDigit(peekNext())) {
+      advance();
+      while (isDigit(peek())){
+		 advance();
+	  }
+    }
+    addToken(NUMBER,Double.parseDouble(source.substring(start, current - start)));
+  }
+char Scanner::peekNext(){
+	if (current + 1 >= source.size()){
+		return '\0';
+	}
+	return source[current + 1];
+}
+
 
 
 
