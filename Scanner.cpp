@@ -4,16 +4,16 @@
 #include <any>
 #include <TokenType.h>
 #include <Token.h>
+#include <ctype.h>
+#include <map>
 using namespace std;
 
 
 
 class Scanner{
 	public:
-		void scanTokens();
-		Scanner(string source){
-			this.source = source
-		}
+		vector<Token> scanTokens();
+		Scanner(string source);
 	private:
 		string source;
 		vector<Token> tokens;
@@ -24,14 +24,44 @@ class Scanner{
 		bool IsAtEnd();
 		void scanToken();
 		char advance();
-		void addToken();
+		void addToken(TokenType type, std::any literal);
+		void addToken(TokenType ttype);
 		bool match(char expected);
+		char peek();
+		void String();
+		void number();
+		bool IsDigit(char c);
+		char peekNext();
+		void identifier();
 
+		map<string, TokenType> keywords;
+		
 		
 		
 
 
 };
+
+Scanner::Scanner(string source){
+	keywords = {
+			 	{"and",    AND},
+    			{"class",  CLASS},
+    			{"else",   ELSE},
+    			{"false",  FALSE},
+    			{"for",    FOR},
+    			{"fun",    FUN},
+    			{"if",     IF},
+    			{"nil",    NIL},
+    			{"or",     OR},
+    			{"print",  PRINT},
+    			{"return", RETURN},
+    			{"super",  SUPER},
+    			{"this",   THIS},
+    			{"true",   TRUE},
+    			{"var",    VAR},
+    			{"while",  WHILE},
+		};
+}
 
 bool Scanner::IsAtEnd(){
 	return current >= source.size();
@@ -39,11 +69,11 @@ bool Scanner::IsAtEnd(){
 
 vector<Token> Scanner::scanTokens(){
 	while(!IsAtEnd()){
-		start = current
+		start = current;
 		scanToken();
 	}
 
-	tokens.emplace(Token(EOF,"",null,line));
+	tokens.emplace_back(Token(TokenEOF,"",NULL,line));
 	return tokens;
 }
 
@@ -77,7 +107,7 @@ void Scanner::scanToken(){
 				while(peek() != '\n' && !IsAtEnd()) advance();
 			}
 			else{
-				addToken(SLASH)
+				addToken(SLASH);
 			}
 			break;
 
@@ -91,13 +121,17 @@ void Scanner::scanToken(){
 			break;
 
 		case '"':
-			String();
+			string();
 			break;
 
 
 		default:
-			if(isDigit(c)){
+			if(isdigit(c)){
 				number();
+			}
+			else if(isalpha(c)){
+				identifier();
+				
 			}
 			else{
 			runtime_error{"Unexpected Character"};
@@ -125,48 +159,56 @@ char Scanner::peek(){
 
 }
 char Scanner::advance() {
-    return source.charAt(current++);
+    return source.at(current++);
   }
 
 void Scanner::addToken(TokenType ttype) {
-    addToken(ttype, null);
+    addToken(ttype, NULL);
   }
 
 void Scanner::addToken(TokenType type, std::any literal) {
-    String text = source.substr(start, current - start);
+    string text = source.substr(start, current - start);
     tokens.emplace_back(Token(type, text, literal, line));
   }
 
-void Scanner::string(){
-	while (peek() != '"' && !isAtEnd()) {
+void Scanner::String(){
+	while (peek() != '"' && !IsAtEnd()) {
       if (peek() == '\n') line++;
       advance();
 	}
-
+}
+void Scanner::number(){
+	while (isdigit(peek())){
+		advance();
+	}
+    if (peek() == '.' && isdigit(peekNext())) {
+      advance();
+      while (isdigit(peek())){
+		 advance();
+	  }
+    }
+    addToken(NUMBER,stod(source.substr(start, current - start)));
 	if(IsAtEnd()){
 		runtime_error{"Undending String"};
 		return;
 	}
 	advance();
 
-	String value = source.substr(start + 1, current - 1);
+
+	string value = source.substr(start, current - start);
 	addToken(STRING,value);
 }
-bool Scanner::IsDigit(char c){
-	return c >= '9' && c <= '0';
-}
-void Scanner::number(){
-	while (isDigit(peek())){
-		advance();
-	}
-    if (peek() == '.' && isDigit(peekNext())) {
-      advance();
-      while (isDigit(peek())){
-		 advance();
-	  }
+
+void Scanner::identifier(){
+    while (isdigit(peek()) || isalpha(peek()) || peek() == '_') {
+        advance();
     }
-    addToken(NUMBER,Double.parseDouble(source.substring(start, current - start)));
-  }
+	string text = source.substr(start, current - start);
+	TokenType toke = keywords[text];
+	if(toke == NULL) toke = IDENTIFIER;
+	addToken(toke);
+}
+
 char Scanner::peekNext(){
 	if (current + 1 >= source.size()){
 		return '\0';
