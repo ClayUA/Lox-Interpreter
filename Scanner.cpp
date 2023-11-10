@@ -2,8 +2,8 @@
 #include <unordered_map>
 #include <string>
 #include <any>
-#include <TokenType.h>
-#include <Token.h>
+#include "TokenType.h"
+#include "Token.h"
 #include <ctype.h>
 #include <map>
 using namespace std;
