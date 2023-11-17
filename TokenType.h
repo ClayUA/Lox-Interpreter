@@ -1,6 +1,6 @@
 #pragma once
 
-
+using namespace std;
 
 enum TokenType {
 	// single character tokens

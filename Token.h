@@ -9,14 +9,14 @@ class Token{
 public:
 	TokenType	type;	
 	string		lexeme;
-	std::any	literal;
+	any			literal;
 	int			line;
 
-	Token(TokenType ttype, string llexeme, std::any lliteral, int lline){
-		type = ttype;
-		lexeme = llexeme;
-		literal = lliteral;
-		line = lline;
+	Token(TokenType ttype, string llexeme, any lliteral, int lline){
+		this->type = ttype;
+		this->lexeme = llexeme;
+		this->literal = lliteral;
+		this->line = lline;
 	}
 	};
 

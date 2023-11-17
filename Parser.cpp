@@ -1,4 +1,4 @@
-# include <iostream>
+#include <iostream>
 #include <unordered_map>
 #include <string>
 #include <any>
@@ -16,75 +16,123 @@ class Parser {
     Parser(vector<Token> tokens) {
     this->tokens = tokens;
     }
-    unique_ptr<Expr> expression(){
+    
+    shared_ptr<Expr> expression(){
         return equality();
     }
-    unique_ptr<Expr> equality() {
+    shared_ptr<Stmt> statement() {
+    if (match(PRINT)) return printStatement();
+
+    return expressionStatement();
+  }
+    shared_ptr<Stmt> printStatement() {
+      shared_ptr<Expr> value = expression();
+    consume(SEMICOLON, "Expect ';' after value.");
+    return Stmt::Print(value);
+  }
+   shared_ptr<Stmt> expressionStatement() {
+      shared_ptr<Expr> expr = expression();
+      consume(SEMICOLON, "Expect ';' after expression.");
+      return new Stmt.Expression(expr);
+  }
+    vector<shared_ptr<Stmt>> Parse(){
+        vector<shared_ptr<Stmt>> statements;
+        while(!isAtEnd()){
+          statement.emplace_back(declaration());
+        }
+    }
+    shared_ptr<Stmt> declaration() {
+    try {
+      if (match(VAR)) return varDeclaration();
+
+      return statement();
+    } catch (ParseError error) {
+      synchronize();
+      return nullptr;
+    }
+  }
+    shared_ptr<Stmt> varDeclaration() {
+      Token name = consume(IDENTIFIER, "Expect variable name.");
+
+      shared_ptr<Expr> initializer = nullptr;
+      if (match(EQUAL)) {
+        initializer = expression();
+    }
+
+      consume(SEMICOLON, "Expect ';' after variable declaration.");
+      return shared_ptr<Var>(move(name), initializer);
+  } 
+
+    
+    shared_ptr<Expr> equality() {
         Expr expr = comparison();
 
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
             Token operator = previous();
-            unique_ptr<Expr> right = comparison();
-            expr = new Expr.Binary(expr, operator, right);
+            shared_ptr<Expr> right = comparison();
+            expr = shared_ptr<Binary>(expr, move(operator), right);
     }
 
     return expr;
   }
-    unique_ptr<Expr> comparison() {
-    unique_ptrExpr expr = term();
+    shared_ptr<Expr> comparison() {
+    shared_ptrExpr expr = term();
 
     while (match(TokenType::GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
       Token operator = previous();
-      unique_ptrExpr right = term();
-      expr = new Expr.Binary(expr, operator, right);
+      shared_ptr<Expr> right = term();
+      expr = new Expr.Binary(expr, move(operator), right);
     }
 
     return expr;
   }
-    unique_ptr<Expr> term() {
-        unique_ptr<Expr> expr = factor();
+    shared_ptr<Expr> term() {
+        shared_ptr<Expr> expr = factor();
 
         while (match(MINUS, PLUS)) {
             Token operator = previous();
             Expr right = factor();
-            expr = new Expr.Binary(expr, operator, right);
+            expr = shared_ptr<Binary>(expr, move(operator), right);
     }
 
     return expr;
   }
-    unique_ptr<Expr> factor() {
-        unique_ptr<Expr> expr = unary();
+    shared_ptr<Expr> factor() {
+        shared_ptr<Expr> expr = Unary();
 
     while (match(SLASH, STAR)) {
         Token operator = previous();
-        unique_ptr<Expr> right = unary();
-        expr = new Expr.Binary(expr, operator, right);
+        shared_ptr<Expr> right = unary();
+        expr = shared_ptr<Binary>(expr, move(operator), right);
     }
 
     return expr;
   }
-    unique_ptr<Expr> unary() {
+    shared_ptr<Expr> unary() {
     if (match(BANG, MINUS)) {
       Token operator = previous();
-      unique_ptr<Expr> right = unary();
-      return make_shared<Expr::Unary>(operator, right);
+      shared_ptr<Expr> right = unary();
+      return shared_ptr<Unary>(move(operator), right);
     }
 
     return primary();
   }
-    unique_ptr<Expr> primary() {
-        if (match(FALSE)) return make_unique<Expr::Literal>(false);
-        if (match(TRUE)) return make_unique<Expr::Literal>(true);
-        if (match(NIL)) return make_unique<Expr::Literal>(NULL);
+    shared_ptr<Expr> primary() {
+        if (match(FALSE)) return shared_ptr<Literal>(false);
+        if (match(TRUE)) return shared_ptr<Literal>(true);
+        if (match(NIL)) return shared_ptr<Literal>(NULL);
 
         if (match(NUMBER, STRING)) {
-        return make_unique<Expr::Literal>(previous().literal);
+        return shared_ptr<Literal>(previous().literal);
     }
+        if (match(IDENTIFIER)) {
+          return shared_ptr<Var>(previous());
+      }
 
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expect ')' after expression.");
-            return make_shared<Expr::Grouping>(expr);
+            return shared_ptr<Grouping>(expr);
     }
   }
 
@@ -147,4 +195,5 @@ class Parser {
             advance();
         }
     }
+    
 };

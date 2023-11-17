@@ -9,7 +9,7 @@
 using namespace std;
 
 
-class interpreter: ExprVisitor<any>,StmtVisitor<any> {
+class interpreter: public ExprVisitor<any> StmtVisitor<void>{
     private:
         any visitLiteralExpr(shared_ptr<Expr> expr) override{
             return expr->value;
@@ -23,6 +23,11 @@ class interpreter: ExprVisitor<any>,StmtVisitor<any> {
                 case MINUS:
                     return -any_cast<double>(right);
     }
+     
+        void visitExpressionStmt(Stmt.Expression stmt) override {
+            any stmt = evaluate(stmt->expression);
+            
+  }
         void checkNumberOperand(Token oper, any operand) {
             if (operand.type() ==  typeid(double)) return;
             throw runtime_error("Operand must be a number.");
@@ -31,6 +36,14 @@ class interpreter: ExprVisitor<any>,StmtVisitor<any> {
             if (left.type() == typeid(double) && right.type() == typeid(double)) return;
     
             throw runtime_error("Operands must be numbers.");
+  }
+        void execute(Stmt stmt) {
+            stmt->accept(*this);
+  }
+        void visitPrintStmt(Stmt.Print stmt) override{
+            any value = evaluate(stmt->expression);
+            cout << (stringify(value)) <<;
+            
   }
         any visitBinaryExpr(shared_ptr<Binary> expr) override {
             any left = evaluate(expr->left);
@@ -90,19 +103,19 @@ class interpreter: ExprVisitor<any>,StmtVisitor<any> {
 
             if (object.type() == typeid(double)) {
                 string text = object.to_string();
-            if (text.endsWith(".0")) {
+            if (text.ends_with(".0")) {
                 text = text.substr(0, text.length() - 2);
         }
         return text;
     }
 
-    return object.toString();
+    return object.to_string();
   }
 
         return NULL;
         }
         any evaluate(shared_ptr<Expr> expr) {
-            return expr->accept(this);
+            return expr->accept(*this);
         }
 
         
@@ -116,4 +129,4 @@ class interpreter: ExprVisitor<any>,StmtVisitor<any> {
     }
   }
 
-};
+}; 

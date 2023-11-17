@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
         exit(64);
     }
     string outputDir = argv[0];
-    defineAST(outputDir, 'Expr', {
+    defineAST(outputDir, "Expr", {
         "Binary   : Expr left, Token operator, Expr right",
         "Grouping : Expr expression",
         "Literal  : Object value",
@@ -41,55 +41,64 @@ vector<string> split(const string& str, char delimiter) {
 void defineAST(string& outputDir, string& basename, vector<string> types){
     string path = outputDir + "/" + basename + ".h";
     ofstream writer{path};
-    writer << "#pragma once\n"
-            "\n"
-            "#include <any>\n"
-            "#include <memory>\n"
-            "#include <utility>"
-            "#include <vector>\n"
-            "#include \"Token.h\"\n"
-            "\n";
-    for (string type : types){
-        string classname = trim(split(type, ': ')[0]);
-        writer << "struct " << classname << ";\n";
+
+    writer <<   "#pragma once\n"
+                "#include <algorithm>\n"     
+                "#include <cctype>\n"        
+                "#include <fstream>\n"
+                "#include <iostream>\n"
+                "#include <sstream>\n"
+                "#include <string>\n"
+                "#include <string_view>\n"
+                "#include <utility>\n"      
+                "#include <vector>\n"
+                " using namespace std;\n"
+                "class " + basename + " {\n"
+
+                defineVisitor(writer,basename,types);
+                for (string type : types) {
+                    string className = type.split(trim(":"))[0];
+                    string fields = type.split(trim(":"))[1]; 
+                    defineType(writer, baseName, className, fields);
+                }
+                "}";
+                writer << "\n";
         }
 
-        writer << "\n";
-        defineVisitor(writer, basename, types);
-
-          writer << "\n"
-                    "struct " << basename << " {\n"
-                    "  virtual std::any accept(" << basename <<
-                    "Visitor& visitor) = 0;\n"
-                    "};\n\n";
-        for (string_view type : types) {
-            string classname = trim(split(type, ': ')[0]);
-            string fields = trim(split(type, ": ")[1]);
-            defineType(writer, basename, classname, fields);
-        }
-}
 
 void defineType(ofstream writer, string baseName,string className, string fieldList) {
-    writer << "  static class " << className << " extends " <<
+    writer << "  class " << className << " extends " <<
         baseName << "{" << endl;
 
     // Constructor.
     writer << "    " << className << "(" << fieldList << ")" << "{" << ;
 
     // Store parameters in fields.
-     string fields = fieldList.split(', ');
+     string[] fields = fieldList.split(', ');
     for (string field : fields) {
       string name = field.split(" ")[1];
-      writer << "      this." << name << " = " << name << ";" << endl;
+      writer << "      this->" << name << " = " << name << ";" << endl;
     }
 
     writer.println("    }");
 
     // Fields.
-    writer.println();
+    writer << "\n";
     for (String field : fields) {
-      writer.println("    final " + field + ";");
+      writer << "    const " + field + ";\n";
     }
 
-    writer << "  }" << endl;
+    writer << "  };" << endl;
+  }
+  void defineVisitor(){
+      writer << "  interface Visitor<R> {";
+
+    for (string type : types) {
+        string typeName = type.split(trim(":"))[0];
+        writer <<"    R visit" + typeName + baseName + "(" +
+          typeName + " " + baseName.toLowerCase() + ");";
+    }
+
+    writer << "  }";
+
   }

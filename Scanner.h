@@ -24,7 +24,7 @@ class Scanner{
 		bool IsAtEnd();
 		void scanToken();
 		char advance();
-		void addToken(TokenType type, std::any literal);
+		void addToken(TokenType ttype, any literal);
 		void addToken(TokenType ttype);
 		bool match(char expected);
 		char peek();
@@ -44,22 +44,22 @@ class Scanner{
 
 Scanner::Scanner(string source){
 	keywords = {
-			 	{"and",    AND},
-    			{"class",  CLASS},
-    			{"else",   ELSE},
-    			{"false",  FALSE},
-    			{"for",    FOR},
-    			{"fun",    FUN},
-    			{"if",     IF},
-    			{"nil",    NIL},
-    			{"or",     OR},
-    			{"print",  PRINT},
-    			{"return", RETURN},
-    			{"super",  SUPER},
-    			{"this",   THIS},
-    			{"true",   TRUE},
-    			{"var",    VAR},
-    			{"while",  WHILE},
+			 	{"and",    TokenType::AND},
+    			{"class",  TokenType::CLASS},
+    			{"else",   TokenType::ELSE},
+    			{"false",  TokenType::FALSE},
+    			{"for",    TokenType::FOR},
+    			{"fun",    TokenType::FUN},
+    			{"if",     TokenType::IF},
+    			{"nil",    TokenType::NIL},
+    			{"or",     TokenType::OR},
+    			{"print",  TokenType::PRINT},
+    			{"return", TokenType::RETURN},
+    			{"super",  TokenType::SUPER},
+    			{"this",   TokenType::THIS},
+    			{"true",   TokenType::TRUE},
+    			{"var",    TokenType::VAR},
+    			{"while",  TokenType::WHILE},
 		};
 }
 
@@ -73,7 +73,7 @@ vector<Token> Scanner::scanTokens(){
 		scanToken();
 	}
 
-	tokens.emplace_back(Token(TokenEOF,"",NULL,line));
+	tokens.emplace_back(Token(TokenEOF,"",nullptr,line));
 	return tokens;
 }
 
@@ -161,15 +161,15 @@ char Scanner::peek(){
 char Scanner::advance() {
     return source.at(current++);
   }
-
-void Scanner::addToken(TokenType ttype) {
-    addToken(ttype, NULL);
-  }
-
-void Scanner::addToken(TokenType type, std::any literal) {
+void Scanner::addToken(TokenType type, any literal) {
     string text = source.substr(start, current - start);
     tokens.emplace_back(Token(type, text, literal, line));
+}
+void Scanner::addToken(TokenType ttype) {
+    addToken(ttype, monostate());
   }
+
+
 
 void Scanner::String(){
 	while (peek() != '"' && !IsAtEnd()) {
@@ -189,7 +189,7 @@ void Scanner::number(){
     }
     addToken(NUMBER,stod(source.substr(start, current - start)));
 	if(IsAtEnd()){
-		runtime_error{"Undending String"};
+		runtime_error("Undending String");
 		return;
 	}
 	advance();
@@ -204,9 +204,12 @@ void Scanner::identifier(){
         advance();
     }
 	string text = source.substr(start, current - start);
-	TokenType toke = keywords[text];
-	if(toke == NULL) toke = IDENTIFIER;
-	addToken(toke);
+	if(keywords.find(text) == keywords.end()){
+		addToken(IDENTIFIER);
+	}
+	else{
+		addToken(keywords.at(text));
+	}
 }
 
 char Scanner::peekNext(){
